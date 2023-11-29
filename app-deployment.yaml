@@ -29,3 +29,9 @@ spec:
     targetPort: 8080
   selector:
     app: nodejs
+    
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mcd-apps
+

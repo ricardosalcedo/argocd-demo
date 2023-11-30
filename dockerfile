@@ -1,7 +1,7 @@
-FROM node:21
-WORKDIR /usr/src/app
-COPY package*.json ./
-RUN npm install
+FROM python:3.8-slim
+WORKDIR /app
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt
 COPY . .
+CMD ["python", "app.py"]
 EXPOSE 8080
-CMD [ "node", "app.js" ]

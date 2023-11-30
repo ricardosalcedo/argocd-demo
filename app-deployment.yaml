@@ -1,44 +1,62 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: mcd-apps
+  name: mcd-app
+spec: {}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: python-app
+  namespace: mcd-app
+  name: mcd-app
 spec:
-  replicas: 2
   selector:
     matchLabels:
-      app: python-app
+      app.kubernetes.io/name: mcd-app
   template:
     metadata:
       labels:
-        app: python-app
+        app.kubernetes.io/name: mcd-app
     spec:
       containers:
-      - name: python-app
-        image: 164524828151.dkr.ecr.us-east-1.amazonaws.com/argocd-demo:latest
+      - image: 164524828151.dkr.ecr.us-east-1.amazonaws.com/argocd-demo:latest
+        name: mcd-app
         ports:
         - containerPort: 8080
+          name: http
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: python-lb
-  annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: external 
-    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
-    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: instance
-  namespace: mcd-apps
+  namespace: mcd-app
+  name: mcd-app
 spec:
-  type: LoadBalancer
   ports:
-  - port: 80
-    targetPort: 8080
-    name: http
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+  type: ClusterIP
   selector:
-    app.kubernetes.io/name: python-app
-    app.kubernetes.io/instance: python-app
-    app.kubernetes.io/component: service
+    app.kubernetes.io/name: mcd-app
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: mcd-app
+  name: mcd-app
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: mcd-app
+              port:
+                name: http
